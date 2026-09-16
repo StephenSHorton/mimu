@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_call:
+    inputs:
+      version:
+        description: Release tag to bake into the nav (e.g. v1.0.0)
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -31,7 +37,7 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE_PATH: /mimu/
-          VITE_APP_VERSION: ${{ github.ref_name }}
+          VITE_APP_VERSION: ${{ inputs.version || github.ref_name }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

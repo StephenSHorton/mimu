@@ -1,0 +1,20 @@
+name: Bootstrap Pages from release file
+
+# Runs only when .github/pages-release changes — not on every main push.
+# Regular deploys still come from version tags via deploy-pages.yml.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/pages-release'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-pages.yml
+    with:
+      version: v1.0.0

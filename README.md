@@ -40,7 +40,7 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-If the repo has no `v*.*.*` tags yet, `.github/workflows/ensure-first-tag.yml` creates `v1.0.0` on the first `main` push so Pages can go live.
+If the repo has no `v*.*.*` tags yet, `.github/workflows/ensure-first-tag.yml` creates `v1.0.0` on the first `main` push. Changing `.github/pages-release` bootstraps the first Pages deploy (GitHub will not start a second workflow from a `GITHUB_TOKEN` tag push).
 
 ## Stack
 
