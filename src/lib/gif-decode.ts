@@ -68,7 +68,9 @@ export function decodeGif(buffer: ArrayBuffer): DecodedGif {
 }
 
 export function frameIndexAt(gif: DecodedGif, timeMs: number): number {
-  if (gif.frames.length === 0) return 0
+  if (gif.frames.length === 0 || gif.durationMs <= 0) return 0
+  // t == duration is the end of the last frame, not a wrap back to frame 0.
+  if (timeMs >= gif.durationMs) return gif.frames.length - 1
   const wrapped = ((timeMs % gif.durationMs) + gif.durationMs) % gif.durationMs
   let acc = 0
   for (let i = 0; i < gif.frames.length; i += 1) {
@@ -84,6 +86,33 @@ export function timeAtFrame(gif: DecodedGif, index: number): number {
   let acc = 0
   for (let i = 0; i < clamped; i += 1) acc += gif.frames[i].delayMs
   return acc / gif.durationMs
+}
+
+/** Normalized time at the exclusive end of a frame (1 = end of the GIF). */
+export function endTimeOfFrame(gif: DecodedGif, index: number): number {
+  if (gif.frames.length === 0) return 1
+  const clamped = Math.min(Math.max(index, 0), gif.frames.length - 1)
+  if (clamped >= gif.frames.length - 1) return 1
+  return timeAtFrame(gif, clamped + 1)
+}
+
+export function inFrameFromTime(gif: DecodedGif, time: number): number {
+  if (gif.frames.length === 0) return 1
+  return frameIndexAt(gif, Math.min(Math.max(time, 0), 0.999999) * gif.durationMs) + 1
+}
+
+export function outFrameFromTime(gif: DecodedGif, time: number): number {
+  if (gif.frames.length === 0) return 1
+  if (time >= 1 - 1e-9) return gif.frames.length
+  return frameIndexAt(gif, Math.max(0, time * gif.durationMs - 1e-6)) + 1
+}
+
+export function inTimeFromFrame(gif: DecodedGif, frameNumber: number): number {
+  return timeAtFrame(gif, frameNumber - 1)
+}
+
+export function outTimeFromFrame(gif: DecodedGif, frameNumber: number): number {
+  return endTimeOfFrame(gif, frameNumber - 1)
 }
 
 export function snapTimeToFrame(gif: DecodedGif, time: number): number {
@@ -105,11 +134,5 @@ export function gifFrameAt(gif: DecodedGif, timeMs: number): HTMLCanvasElement {
     empty.height = gif.height
     return empty
   }
-  const wrapped = ((timeMs % gif.durationMs) + gif.durationMs) % gif.durationMs
-  let acc = 0
-  for (const frame of gif.frames) {
-    acc += frame.delayMs
-    if (wrapped < acc) return frame.canvas
-  }
-  return gif.frames[gif.frames.length - 1].canvas
+  return gif.frames[frameIndexAt(gif, timeMs)].canvas
 }

@@ -12,7 +12,13 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
-import { frameIndexAt, timeAtFrame, type DecodedGif } from '@/lib/gif-decode'
+import {
+  inFrameFromTime,
+  inTimeFromFrame,
+  outFrameFromTime,
+  outTimeFromFrame,
+  type DecodedGif,
+} from '@/lib/gif-decode'
 import {
   applyMotion,
   createEmojiLayer,
@@ -79,14 +85,24 @@ export function LayerInspector({
     onSelect(layers[layers.length - 1]?.id ?? null)
   }
 
-  function timeToFrame(time: number) {
+  function timeToInFrame(time: number) {
     if (!gif) return Math.round(time * (frameCount - 1)) + 1
-    return frameIndexAt(gif, time * project.durationMs) + 1
+    return inFrameFromTime(gif, time)
   }
 
-  function frameToTime(frameNumber: number) {
+  function timeToOutFrame(time: number) {
+    if (!gif) return Math.max(1, Math.round(time * frameCount))
+    return outFrameFromTime(gif, time)
+  }
+
+  function inFrameToTime(frameNumber: number) {
     if (!gif) return (frameNumber - 1) / Math.max(1, frameCount - 1)
-    return timeAtFrame(gif, frameNumber - 1)
+    return inTimeFromFrame(gif, frameNumber)
+  }
+
+  function outFrameToTime(frameNumber: number) {
+    if (!gif) return frameNumber / frameCount
+    return outTimeFromFrame(gif, frameNumber)
   }
 
   return (
@@ -134,7 +150,7 @@ export function LayerInspector({
           >
             <span className="truncate">{layerLabel(layer)}</span>
             <span className="text-[11px] text-muted-foreground">
-              f{timeToFrame(layer.inTime)}–{timeToFrame(layer.outTime)}
+              f{timeToInFrame(layer.inTime)}–{timeToOutFrame(layer.outTime)}
             </span>
           </button>
         ))}
@@ -153,27 +169,27 @@ export function LayerInspector({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Show from frame {timeToFrame(selected.inTime)}</Label>
+            <Label>Show from frame {timeToInFrame(selected.inTime)}</Label>
             <Slider
               min={1}
               max={frameCount}
               step={1}
-              value={[timeToFrame(selected.inTime)]}
+              value={[timeToInFrame(selected.inTime)]}
               onValueChange={(value) => {
-                const inTime = frameToTime(value[0] ?? 1)
+                const inTime = inFrameToTime(value[0] ?? 1)
                 patch({ inTime, outTime: Math.max(selected.outTime, inTime) })
               }}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Hide after frame {timeToFrame(selected.outTime)}</Label>
+            <Label>Hide after frame {timeToOutFrame(selected.outTime)}</Label>
             <Slider
               min={1}
               max={frameCount}
               step={1}
-              value={[timeToFrame(selected.outTime)]}
+              value={[timeToOutFrame(selected.outTime)]}
               onValueChange={(value) => {
-                const outTime = frameToTime(value[0] ?? frameCount)
+                const outTime = outFrameToTime(value[0] ?? frameCount)
                 patch({ outTime, inTime: Math.min(selected.inTime, outTime) })
               }}
             />
