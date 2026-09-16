@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_APP_VERSION?: string
+  readonly VITE_BASE_PATH?: string
+}
+
 declare module 'gifenc' {
   export function GIFEncoder(opts?: { initialCapacity?: number; auto?: boolean }): {
     writeFrame: (

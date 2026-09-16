@@ -2,8 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: read
@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -28,6 +31,7 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE_PATH: /mimu/
+          VITE_APP_VERSION: ${{ github.ref_name }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

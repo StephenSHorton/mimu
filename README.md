@@ -31,12 +31,16 @@ Everything runs in the browser. Your file is not uploaded to a server.
 
 ## GitHub Pages
 
-This repo is named **mimu**. Production builds set `VITE_BASE_PATH=/mimu/`.
+The live site is **https://stephenshorton.github.io/mimu/**.
 
-1. Settings → Pages → Source: **GitHub Actions**
-2. Push `main`. `.github/workflows/deploy-pages.yml` builds and deploys
+Deploys run only when a version tag is pushed (`v1.0.0`, `v1.0.1`, …) — not on every `main` push. The workflow is `.github/workflows/deploy-pages.yml`. It sets `VITE_BASE_PATH=/mimu/` and bakes `VITE_APP_VERSION` from the tag so the nav shows e.g. `v1.0.0`.
 
-The public site is `https://<user>.github.io/mimu/`.
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+If the repo has no `v*.*.*` tags yet, `.github/workflows/ensure-first-tag.yml` creates `v1.0.0` on the first `main` push so Pages can go live.
 
 ## Stack
 
