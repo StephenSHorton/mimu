@@ -1,0 +1,30 @@
+name: Ensure first release tag
+
+# Creates v1.0.0 once if the repo has no version tags yet.
+# Pages still deploy only from .github/workflows/deploy-pages.yml on those tags.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create v1.0.0 if no version tags exist
+        run: |
+          git fetch --tags --force
+          if git tag -l 'v*.*.*' | grep -q .; then
+            echo "Version tags already exist; leaving them alone."
+            git tag -l 'v*.*.*'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a v1.0.0 -m "ミーム v1.0.0 — first slice"
+          git push origin v1.0.0
