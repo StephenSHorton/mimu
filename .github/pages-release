@@ -1,2 +1,2 @@
 v1.0.0
-# retry deploy without configure-pages enablement
+# retry: no npm cache (lockfile is not on GitHub)
