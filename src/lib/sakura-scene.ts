@@ -108,9 +108,9 @@ function grow(
     dir
       .add(
         new THREE.Vector3(
-          (rand() - 0.68) * 0.36,
-          -0.16 + (rand() - 0.52) * 0.16,
-          (rand() - 0.5) * 0.28,
+          (rand() - 0.58) * 0.22,
+          -0.12 + (rand() - 0.5) * 0.12,
+          (rand() - 0.5) * 0.2,
         ),
       )
       .normalize()
@@ -136,18 +136,18 @@ function grow(
     return
   }
 
-  const childCount = depth === 0 ? 5 : depth === 1 ? 4 : 2 + (rand() > 0.45 ? 1 : 0)
+  const childCount = depth === 0 ? 4 : depth === 1 ? 3 : 2 + (rand() > 0.55 ? 1 : 0)
   for (let c = 0; c < childCount; c += 1) {
-    const axis = new THREE.Vector3(rand() - 0.55, rand() - 0.7, rand() - 0.5).normalize()
-    const childDir = dir.clone().applyAxisAngle(axis, 0.28 + rand() * 0.7)
-    childDir.y = -Math.abs(childDir.y) * 0.62 - 0.2
-    childDir.x -= 0.34
+    const axis = new THREE.Vector3(rand() - 0.5, rand() - 0.65, rand() - 0.5).normalize()
+    const childDir = dir.clone().applyAxisAngle(axis, 0.22 + rand() * 0.48)
+    childDir.y = -Math.abs(childDir.y) * 0.7 - 0.18
+    childDir.x -= 0.12
     childDir.normalize()
     grow(
       point,
       childDir,
-      length * (0.58 + rand() * 0.24),
-      radius * (0.46 + rand() * 0.16),
+      length * (0.46 + rand() * 0.16),
+      radius * (0.48 + rand() * 0.14),
       depth + 1,
       maxDepth,
       rand,
@@ -180,7 +180,7 @@ function spawnFlower(
   return {
     position,
     quaternion,
-    scale: 0.042 + rand() * 0.055,
+    scale: 0.055 + rand() * 0.07,
     color: new THREE.Color(palette[Math.floor(rand() * palette.length)]),
   }
 }
@@ -230,12 +230,13 @@ export function mountSakura(
   const flowers: FlowerSpawn[] = []
   const maxDepth = compact ? 4 : 5
 
-  // Trunk sits off the right edge; limbs hang down into the frame.
+  // Compact weeping mass in the top-right. Camera pins this to the right edge.
+  const crown = new THREE.Vector3(3.45, 3.05, 0)
   grow(
-    new THREE.Vector3(4.35, 5.15, 0.12),
-    new THREE.Vector3(-0.22, -1, -0.04),
-    compact ? 2.35 : 2.85,
-    0.19,
+    crown.clone().add(new THREE.Vector3(0.55, 1.15, 0.08)),
+    new THREE.Vector3(-0.12, -1, -0.03),
+    compact ? 1.55 : 1.85,
+    0.15,
     0,
     maxDepth,
     rand,
@@ -243,10 +244,10 @@ export function mountSakura(
     flowers,
   )
   grow(
-    new THREE.Vector3(3.85, 4.55, -0.18),
-    new THREE.Vector3(-0.92, -0.42, 0.08),
-    compact ? 2.55 : 3.35,
-    0.06,
+    crown.clone().add(new THREE.Vector3(0.22, 0.72, -0.16)),
+    new THREE.Vector3(-0.42, -0.82, 0.06),
+    compact ? 1.25 : 1.55,
+    0.048,
     2,
     maxDepth,
     rand,
@@ -254,10 +255,10 @@ export function mountSakura(
     flowers,
   )
   grow(
-    new THREE.Vector3(4.05, 3.55, 0.28),
-    new THREE.Vector3(-0.78, -0.62, -0.22),
-    compact ? 2.05 : 2.65,
-    0.045,
+    crown.clone().add(new THREE.Vector3(0.08, 0.28, 0.2)),
+    new THREE.Vector3(-0.28, -0.9, -0.12),
+    compact ? 1.1 : 1.35,
+    0.036,
     2,
     maxDepth,
     rand,
@@ -362,10 +363,14 @@ export function mountSakura(
     renderer.setSize(width, height, false)
     const aspect = width / Math.max(1, height)
     camera.aspect = aspect
-    // Keep the hanging mass on the right; leave the left/center for UI.
-    const shift = THREE.MathUtils.clamp((aspect - 1.15) * 0.85, -0.15, 1.55)
-    camera.position.set(1.15 - shift, 1.05, 7.35)
-    camera.lookAt(2.85, 2.35, 0)
+    const dist = 7.6
+    const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
+    const halfW = halfH * aspect
+    // Pin the crown to the upper-right so limbs enter from the top-right.
+    const camX = crown.x - halfW * 0.64
+    const camY = crown.y - halfH * 0.32
+    camera.position.set(camX, camY, dist)
+    camera.lookAt(camX, camY, 0)
     camera.updateProjectionMatrix()
   }
   setSize()
