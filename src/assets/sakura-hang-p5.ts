@@ -12,7 +12,7 @@ export const part = [
   'Knzvl5WnjpU743va2NY4KEUlGMFrotEt',
   'S2ot8yNV6kxM5/lvPHplB7iDl8KqT57T',
   'emyenu0Y0JWWEZyxxlqrbafGov8AUiSg',
-  '8b5dWls+q8fFbDu3tvZPxVPHHVyeqbb1',
+  '8b5dWls+q8fFbDu3tvZPxNjPHHVyeqbb',
   'tPqcvuYRWVSxvnyRThGD1qc/2t9OVW34',
   'HQTeDt5SdX5pJPq9l6si9pjuTytJyn5n',
   '7tK6XpXsTpGet7Z9WWng+DhVSb5U27V+',
