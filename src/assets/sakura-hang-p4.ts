@@ -173,7 +173,7 @@ export const part = [
   'rriWfPo9Lo3a21OZ3ufHCDx88VKapp8E',
   '+LX2RbLnlP8Ac4ronV++lnPn9PUW5Q1+',
   'JO8kskpOST/4vjWyT2O9zjTxZk6+y7su',
-  'xxdx/fyLgitIx1UXW78VwS2PQUoJRSSS',
+  'xxdx/fyLmitIx1UXW78VwS2PQUoJRSSS',
   '2SVJfI5WTuZ48LjhWPHyR8rnrGKS4rQ8',
   '1/8Ae+8xr4k3DIuXXHKKin7OCtP5+xn7',
   'tu3jn0Ys3brb8sj6hCPx1DM1lyrmyTns',
