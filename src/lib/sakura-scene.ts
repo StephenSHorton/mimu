@@ -119,8 +119,8 @@ function grow(
     const t1 = (i + 1) / segments
     limbs.push(makeLimb(point, next, radius * (1 - t0 * 0.2), radius * (1 - t1 * 0.22)))
 
-    if (depth >= 2 && (depth >= 3 || i >= segments - 2)) {
-      const count = depth >= 4 ? 5 + Math.floor(rand() * 6) : 3 + Math.floor(rand() * 3)
+    if (depth >= 1 || i >= segments - 2) {
+      const count = depth >= 3 ? 6 + Math.floor(rand() * 6) : 3 + Math.floor(rand() * 4)
       for (let k = 0; k < count; k += 1) {
         flowers.push(spawnFlower(point, next, dir, rand))
       }
@@ -230,13 +230,13 @@ export function mountSakura(
   const flowers: FlowerSpawn[] = []
   const maxDepth = compact ? 4 : 5
 
-  // Compact weeping mass in the top-right. Camera pins this to the right edge.
-  const crown = new THREE.Vector3(3.45, 3.05, 0)
+  // Thick limb enters from off-screen top-right and hangs down into view.
+  const crown = new THREE.Vector3(3.7, 3.55, 0)
   grow(
-    crown.clone().add(new THREE.Vector3(0.55, 1.15, 0.08)),
-    new THREE.Vector3(-0.12, -1, -0.03),
-    compact ? 1.55 : 1.85,
-    0.15,
+    crown.clone().add(new THREE.Vector3(1.15, 1.35, 0.1)),
+    new THREE.Vector3(-0.62, -0.72, -0.04),
+    compact ? 2.05 : 2.45,
+    0.145,
     0,
     maxDepth,
     rand,
@@ -244,21 +244,21 @@ export function mountSakura(
     flowers,
   )
   grow(
-    crown.clone().add(new THREE.Vector3(0.22, 0.72, -0.16)),
-    new THREE.Vector3(-0.42, -0.82, 0.06),
-    compact ? 1.25 : 1.55,
-    0.048,
-    2,
+    crown.clone().add(new THREE.Vector3(0.85, 1.05, -0.22)),
+    new THREE.Vector3(-0.38, -0.9, 0.08),
+    compact ? 1.55 : 1.9,
+    0.05,
+    1,
     maxDepth,
     rand,
     limbs,
     flowers,
   )
   grow(
-    crown.clone().add(new THREE.Vector3(0.08, 0.28, 0.2)),
-    new THREE.Vector3(-0.28, -0.9, -0.12),
-    compact ? 1.1 : 1.35,
-    0.036,
+    crown.clone().add(new THREE.Vector3(0.55, 0.72, 0.24)),
+    new THREE.Vector3(-0.72, -0.55, -0.1),
+    compact ? 1.35 : 1.7,
+    0.038,
     2,
     maxDepth,
     rand,
@@ -367,8 +367,8 @@ export function mountSakura(
     const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
     const halfW = halfH * aspect
     // Pin the crown to the upper-right so limbs enter from the top-right.
-    const camX = crown.x - halfW * 0.64
-    const camY = crown.y - halfH * 0.32
+    const camX = crown.x - halfW * 0.72
+    const camY = crown.y - halfH * 0.58
     camera.position.set(camX, camY, dist)
     camera.lookAt(camX, camY, 0)
     camera.updateProjectionMatrix()
