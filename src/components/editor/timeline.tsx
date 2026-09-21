@@ -1,6 +1,11 @@
 import { Pause, Play, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { frameIndexAt, snapTimeToFrame, type DecodedGif } from '@/lib/gif-decode'
+import {
+  discreteFrameCount,
+  discreteFrameIndex,
+  discreteTime,
+} from '@/lib/frames'
+import { type DecodedGif } from '@/lib/gif-decode'
 import { sampleLayer, upsertKeyframe } from '@/lib/interpolation'
 import { layerLabel, updateLayer } from '@/lib/project'
 import { cn } from '@/lib/utils'
@@ -29,22 +34,23 @@ export function Timeline({
   onSelect,
   onChange,
 }: TimelineProps) {
-  const frameCount = gif?.frames.length ?? 1
-  const frameIndex = gif ? frameIndexAt(gif, time * project.durationMs) : 0
-  const seconds = (time * project.durationMs) / 1000
+  const frameCount = discreteFrameCount(project.durationMs, gif)
+  const frameIndex = discreteFrameIndex(time, project.durationMs, gif)
+  const poseTime = discreteTime(time, project.durationMs, gif)
+  const seconds = (poseTime * project.durationMs) / 1000
 
   function seekFromEvent(event: React.PointerEvent<HTMLDivElement>) {
     const rect = event.currentTarget.getBoundingClientRect()
     const raw = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width))
-    onTime(gif ? snapTimeToFrame(gif, raw) : raw)
+    onTime(discreteTime(raw, project.durationMs, gif))
     onPlaying(false)
   }
 
   function addKeyframe(layer: Layer) {
-    const sample = sampleLayer(layer, time)
+    const sample = sampleLayer(layer, poseTime)
     onChange(
       updateLayer(project, layer.id, (current) =>
-        upsertKeyframe(current, { ...sample, time, opacity: 1 }),
+        upsertKeyframe(current, { ...sample, time: poseTime, opacity: 1 }),
       ),
     )
   }
@@ -96,11 +102,11 @@ export function Timeline({
                   type="button"
                   className="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-sm ring-2 ring-background"
                   style={{ left: `${frame.time * 100}%` }}
-                  aria-label={`Keyframe at frame ${gif ? frameIndexAt(gif, frame.time * project.durationMs) + 1 : 1}`}
+                  aria-label={`Keyframe at frame ${discreteFrameIndex(frame.time, project.durationMs, gif) + 1}`}
                   onPointerDown={(event) => {
                     event.stopPropagation()
                     onSelect(layer.id)
-                    onTime(gif ? snapTimeToFrame(gif, frame.time) : frame.time)
+                    onTime(discreteTime(frame.time, project.durationMs, gif))
                     onPlaying(false)
                   }}
                 />
@@ -108,7 +114,7 @@ export function Timeline({
               {selectedId === layer.id ? (
                 <span
                   className="pointer-events-none absolute inset-y-0 w-0.5 bg-primary"
-                  style={{ left: `${time * 100}%` }}
+                  style={{ left: `${poseTime * 100}%` }}
                 />
               ) : null}
             </div>
@@ -138,7 +144,7 @@ export function Timeline({
               />
             ))
           : null}
-        <span className="absolute inset-y-0 w-0.5 bg-primary" style={{ left: `${time * 100}%` }} />
+        <span className="absolute inset-y-0 w-0.5 bg-primary" style={{ left: `${poseTime * 100}%` }} />
       </div>
     </section>
   )

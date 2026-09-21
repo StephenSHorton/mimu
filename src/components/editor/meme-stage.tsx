@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { discreteTime } from '@/lib/frames'
 import { gifFrameAt, type DecodedGif } from '@/lib/gif-decode'
 import { clamp, sampleLayer, upsertKeyframe } from '@/lib/interpolation'
 import { drawMeme, hitTestLayer } from '@/lib/render'
@@ -33,10 +34,11 @@ export function MemeStage({
     if (!canvas || !ctx) return
     canvas.width = project.media.width
     canvas.height = project.media.height
-    const timeMs = time * project.durationMs
+    const poseTime = discreteTime(time, project.durationMs, gif)
+    const timeMs = poseTime * project.durationMs
     const media = gif ? gifFrameAt(gif, timeMs) : still
     if (!media) return
-    drawMeme(ctx, media, project, time, { selectedId, showGuides: true })
+    drawMeme(ctx, media, project, poseTime, { selectedId, showGuides: true })
   }, [gif, project, selectedId, still, time])
 
   function pointOnCanvas(event: React.PointerEvent<HTMLCanvasElement>) {
@@ -56,7 +58,8 @@ export function MemeStage({
     const ctx = canvas?.getContext('2d')
     const point = pointOnCanvas(event)
     if (!canvas || !ctx || !point) return
-    const hit = hitTestLayer(ctx, project, time, point.x, point.y)
+    const poseTime = discreteTime(time, project.durationMs, gif)
+    const hit = hitTestLayer(ctx, project, poseTime, point.x, point.y)
     onSelect(hit)
     if (!hit) return
     dragRef.current = { id: hit, grabbing: true }
@@ -72,8 +75,9 @@ export function MemeStage({
     const y = clamp(point.y / canvas.height, 0, 1)
     onChange(
       updateLayer(project, drag.id, (layer) => {
-        const current = sampleLayer(layer, time)
-        return upsertKeyframe(layer, { ...current, time, x, y })
+        const poseTime = discreteTime(time, project.durationMs, gif)
+        const current = sampleLayer(layer, poseTime)
+        return upsertKeyframe(layer, { ...current, time: poseTime, x, y })
       }),
     )
   }

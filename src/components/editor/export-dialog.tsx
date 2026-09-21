@@ -32,7 +32,7 @@ export function ExportDialog({ project, time, still, gif }: ExportDialogProps) {
     setBusy('png')
     setError(null)
     try {
-      const blob = await exportPng(media, project, time)
+      const blob = await exportPng(media, project, time, gif)
       downloadBlob(blob, `${slugTitle(project.media.title)}.png`)
       setOpen(false)
     } catch (err) {
