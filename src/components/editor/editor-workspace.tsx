@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { SlidersHorizontal } from 'lucide-react'
 import { AdSlot } from '@/components/layout/ad-slot'
@@ -16,6 +16,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { discreteTime, stillFrameAtTime, stillFrameCount, stillTimeAtFrame } from '@/lib/frames'
 import { stepFrame, type DecodedGif } from '@/lib/gif-decode'
 import { DEMO_MEDIA } from '@/lib/media'
 import { loadOwnedMedia, prepareEditorSource } from '@/lib/media-bytes'
@@ -72,6 +73,7 @@ export function EditorWorkspace({ mediaId }: EditorWorkspaceProps) {
             height: source.height,
           },
           durationMs,
+          source.gif,
         )
         setProject(next)
         setStill(source.still)
@@ -95,22 +97,27 @@ export function EditorWorkspace({ mediaId }: EditorWorkspaceProps) {
     }
   }, [seed])
 
+  const timeRef = useRef(time)
+  useEffect(() => {
+    timeRef.current = time
+  }, [time])
+
   useEffect(() => {
     if (!playing || !project) return
     let frame = 0
     let last = performance.now()
+    let clockMs = timeRef.current * project.durationMs
     const tick = (now: number) => {
-      const delta = now - last
+      const delta = Math.min(64, now - last)
       last = now
-      setTime((current) => {
-        const next = current + delta / project.durationMs
-        return next >= 1 ? next - 1 : next
-      })
+      clockMs = (clockMs + delta) % project.durationMs
+      if (clockMs < 0) clockMs += project.durationMs
+      setTime(discreteTime(clockMs / project.durationMs, project.durationMs, gif))
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [playing, project])
+  }, [gif, playing, project])
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -122,11 +129,16 @@ export function EditorWorkspace({ mediaId }: EditorWorkspaceProps) {
         event.preventDefault()
         setPlaying((value) => !value)
       }
-      if (event.code === 'ArrowRight' || event.code === 'ArrowLeft') {
+      if ((event.code === 'ArrowRight' || event.code === 'ArrowLeft') && project) {
         event.preventDefault()
         setPlaying(false)
         const delta = event.code === 'ArrowRight' ? 1 : -1
-        setTime((value) => (gif ? stepFrame(gif, value, delta) : Math.min(1, Math.max(0, value + delta * 0.04))))
+        setTime((value) => {
+          if (gif) return stepFrame(gif, value, delta)
+          const count = stillFrameCount(project.durationMs)
+          const index = stillFrameAtTime(project.durationMs, value)
+          return stillTimeAtFrame(project.durationMs, (index + delta + count) % count)
+        })
       }
       if ((event.key === 'Backspace' || event.key === 'Delete') && selectedId && project) {
         const layers = project.layers.filter((layer) => layer.id !== selectedId)
@@ -175,7 +187,7 @@ export function EditorWorkspace({ mediaId }: EditorWorkspaceProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between gap-2 border-b border-primary/10 px-3 py-2 sm:px-4">
+      <div className="flex items-center justify-between gap-2 border-b border-primary/10 bg-background/80 px-3 py-2 backdrop-blur-md sm:px-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{project.media.title}</p>
           <p className="text-[11px] text-muted-foreground">
@@ -214,7 +226,7 @@ export function EditorWorkspace({ mediaId }: EditorWorkspaceProps) {
           onSelect={setSelectedId}
           onChange={setProject}
         />
-        <aside className="hidden w-80 shrink-0 overflow-y-auto border-l border-primary/10 p-4 lg:block">
+        <aside className="hidden w-80 shrink-0 overflow-y-auto border-l border-primary/10 bg-background/75 p-4 backdrop-blur-md lg:block">
           {inspector}
           <AdSlot className="mt-6" />
         </aside>

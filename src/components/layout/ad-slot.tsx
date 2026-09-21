@@ -4,7 +4,7 @@ export function AdSlot({ className }: { className?: string }) {
   return (
     <aside
       className={cn(
-        'rounded-xl border border-dashed border-primary/35 bg-[linear-gradient(180deg,oklch(0.97_0.02_350),oklch(0.94_0.03_350))] px-4 py-3 text-center',
+        'rounded-xl border border-dashed border-primary/35 bg-[linear-gradient(180deg,oklch(0.97_0.02_350/0.92),oklch(0.94_0.03_350/0.9))] px-4 py-3 text-center backdrop-blur-sm',
         className,
       )}
       aria-label="Advertisement placeholder"

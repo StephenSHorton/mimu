@@ -1,0 +1,32 @@
+name: Cut release tag from package.json
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - '.github/workflows/cut-release-tag.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create vX.Y.Z if that tag is missing
+        run: |
+          version=$(node -p "require('./package.json').version")
+          tag="v${version}"
+          git fetch --tags --force
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "$tag already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "ミーム ${tag}"
+          git push origin "$tag"

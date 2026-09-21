@@ -132,25 +132,7 @@
 body {
   min-height: 100svh;
   background:
-    radial-gradient(1200px 500px at 10% -10%, oklch(0.92 0.05 350 / 0.9), transparent 55%),
-    radial-gradient(900px 420px at 100% 0%, oklch(0.9 0.06 20 / 0.55), transparent 50%),
+    radial-gradient(1200px 560px at 8% -8%, oklch(0.93 0.045 350 / 0.85), transparent 58%),
+    radial-gradient(900px 420px at 100% 0%, oklch(0.91 0.05 20 / 0.4), transparent 52%),
     var(--background);
-}
-
-.petal {
-  position: absolute;
-  top: -2rem;
-  color: oklch(0.72 0.14 0);
-  animation-name: petal-fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-@keyframes petal-fall {
-  0% {
-    transform: translate3d(0, -10vh, 0) rotate(0deg);
-  }
-  100% {
-    transform: translate3d(40px, 110vh, 0) rotate(360deg);
-  }
 }

@@ -51,7 +51,7 @@ function HomePage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:py-14">
-      <section className="max-w-xl">
+      <section className="max-w-xl [text-shadow:0_1px_0_oklch(0.99_0.01_350/0.65)]">
         <p className="text-xs tracking-[0.28em] text-primary uppercase">ミーム · Mimu</p>
         <h1 className="font-heading mt-2 text-4xl leading-tight sm:text-5xl">
           Add text to your GIF. Time it to the frames.
@@ -69,7 +69,7 @@ function HomePage() {
           'mt-8 flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-14 text-center transition',
           dragOver
             ? 'border-primary bg-primary/10'
-            : 'border-primary/30 bg-card/80 hover:border-primary/50 hover:bg-primary/5',
+            : 'border-primary/30 bg-card/90 backdrop-blur-md hover:border-primary/50 hover:bg-primary/5',
         )}
         onDragOver={(event) => {
           event.preventDefault()

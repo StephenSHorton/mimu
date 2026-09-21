@@ -1,4 +1,5 @@
 import { applyPalette, GIFEncoder, quantize } from 'gifenc'
+import { discreteTime, stillFrameCount, stillTimeAtFrame, STILL_EXPORT_FPS } from '@/lib/frames'
 import { type DecodedGif } from '@/lib/gif-decode'
 import { drawMeme } from '@/lib/render'
 import type { MemeProject } from '@/types/meme'
@@ -17,6 +18,7 @@ export async function exportPng(
   media: CanvasImageSource,
   project: MemeProject,
   time: number,
+  gif: DecodedGif | null = null,
 ): Promise<Blob> {
   const size = fitSize(project.media.width, project.media.height, 1080)
   const canvas = document.createElement('canvas')
@@ -24,7 +26,7 @@ export async function exportPng(
   canvas.height = size.height
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas is not available')
-  drawMeme(ctx, media, project, time)
+  drawMeme(ctx, media, project, discreteTime(time, project.durationMs, gif))
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
   if (!blob) throw new Error('PNG export failed')
   return blob
@@ -49,7 +51,11 @@ export async function exportGif(
     let elapsed = 0
     for (let i = 0; i < source.frames.length; i += 1) {
       const frame = source.frames[i]
-      const time = source.durationMs ? elapsed / source.durationMs : 0
+      const time = discreteTime(
+        source.durationMs ? elapsed / source.durationMs : 0,
+        source.durationMs,
+        source,
+      )
       drawMeme(ctx, frame.canvas, project, time)
       const rgba = ctx.getImageData(0, 0, size.width, size.height).data
       palette ??= quantize(rgba, 256)
@@ -63,11 +69,10 @@ export async function exportGif(
       if (i % 3 === 2) await new Promise((resolve) => setTimeout(resolve, 0))
     }
   } else {
-    const fps = 12
-    const delay = Math.round(1000 / fps)
-    const frameCount = Math.max(4, Math.round((project.durationMs / 1000) * fps))
+    const frameCount = stillFrameCount(project.durationMs)
+    const delay = Math.round(1000 / STILL_EXPORT_FPS)
     for (let i = 0; i < frameCount; i += 1) {
-      const time = frameCount === 1 ? 0 : i / (frameCount - 1)
+      const time = stillTimeAtFrame(project.durationMs, i)
       drawMeme(ctx, source, project, time)
       const rgba = ctx.getImageData(0, 0, size.width, size.height).data
       palette ??= quantize(rgba, 256)
