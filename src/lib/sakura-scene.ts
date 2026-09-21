@@ -25,6 +25,9 @@ type Faller = {
   scale: number
 }
 
+/** Local space: (0,0) is the top-right corner. +X is off-screen right, -Y is down. */
+const LEFTMOST = -0.38
+
 function mulberry32(seed: number) {
   let a = seed >>> 0
   return () => {
@@ -45,8 +48,8 @@ function makeLimb(
   const dir = b.clone().sub(a)
   const length = dir.length()
   const geometry = new THREE.CylinderGeometry(
-    Math.max(0.006, radiusB),
-    Math.max(0.008, radiusA),
+    Math.max(0.004, radiusB),
+    Math.max(0.005, radiusA),
     length,
     7,
     1,
@@ -89,67 +92,63 @@ function createFlowerGeometry() {
   return merged
 }
 
-function grow(
-  start: THREE.Vector3,
+function clampPoint(p: THREE.Vector3) {
+  p.x = Math.max(LEFTMOST, p.x)
+  return p
+}
+
+function addPolyline(
+  points: THREE.Vector3[],
+  radius: number,
+  limbs: THREE.BufferGeometry[],
+  flowers: FlowerSpawn[],
+  rand: () => number,
+  bloom = true,
+) {
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const a = clampPoint(points[i].clone())
+    const b = clampPoint(points[i + 1].clone())
+    const t0 = i / Math.max(1, points.length - 1)
+    const t1 = (i + 1) / Math.max(1, points.length - 1)
+    limbs.push(makeLimb(a, b, radius * (1 - t0 * 0.35), radius * (1 - t1 * 0.4)))
+    if (bloom) {
+      const count = 3 + Math.floor(rand() * 4)
+      for (let k = 0; k < count; k += 1) {
+        flowers.push(spawnFlower(a, b, b.clone().sub(a).normalize(), rand))
+      }
+    }
+  }
+}
+
+function hangTwigs(
+  origin: THREE.Vector3,
   direction: THREE.Vector3,
   length: number,
   radius: number,
   depth: number,
-  maxDepth: number,
   rand: () => number,
   limbs: THREE.BufferGeometry[],
   flowers: FlowerSpawn[],
 ) {
-  const segments = depth === 0 ? 6 : depth < 3 ? 4 : 3
-  let point = start.clone()
-  let dir = direction.clone().normalize()
-
-  for (let i = 0; i < segments; i += 1) {
-    dir
-      .add(
-        new THREE.Vector3(
-          (rand() - 0.58) * 0.22,
-          -0.12 + (rand() - 0.5) * 0.12,
-          (rand() - 0.5) * 0.2,
-        ),
-      )
-      .normalize()
-    const next = point.clone().add(dir.clone().multiplyScalar(length / segments))
-    const t0 = i / segments
-    const t1 = (i + 1) / segments
-    limbs.push(makeLimb(point, next, radius * (1 - t0 * 0.2), radius * (1 - t1 * 0.22)))
-
-    if (depth >= 1 || i >= segments - 2) {
-      const count = depth >= 3 ? 6 + Math.floor(rand() * 6) : 3 + Math.floor(rand() * 4)
-      for (let k = 0; k < count; k += 1) {
-        flowers.push(spawnFlower(point, next, dir, rand))
-      }
-    }
-    point = next
+  if (depth > 2 || radius < 0.004 || origin.x < LEFTMOST + 0.02) return
+  const dir = direction.clone().normalize()
+  dir.y = -Math.abs(dir.y) - 0.15
+  dir.x = Math.min(0.05, dir.x)
+  dir.normalize()
+  const end = clampPoint(origin.clone().add(dir.multiplyScalar(length)))
+  if (end.x < LEFTMOST) return
+  limbs.push(makeLimb(origin, end, radius, radius * 0.55))
+  const buds = 2 + Math.floor(rand() * 3)
+  for (let k = 0; k < buds; k += 1) {
+    flowers.push(spawnFlower(origin, end, dir, rand, 0.08))
   }
-
-  if (depth >= maxDepth || radius < 0.02) {
-    const tips = 8 + Math.floor(rand() * 8)
-    for (let k = 0; k < tips; k += 1) {
-      flowers.push(spawnFlower(point, point.clone().add(dir), dir, rand, 0.22))
-    }
-    return
-  }
-
-  const childCount = depth === 0 ? 4 : depth === 1 ? 3 : 2 + (rand() > 0.55 ? 1 : 0)
-  for (let c = 0; c < childCount; c += 1) {
-    const axis = new THREE.Vector3(rand() - 0.5, rand() - 0.65, rand() - 0.5).normalize()
-    const childDir = dir.clone().applyAxisAngle(axis, 0.22 + rand() * 0.48)
-    childDir.y = -Math.abs(childDir.y) * 0.7 - 0.18
-    childDir.x -= 0.12
-    childDir.normalize()
-    grow(
-      point,
-      childDir,
-      length * (0.46 + rand() * 0.16),
-      radius * (0.48 + rand() * 0.14),
+  if (depth < 2) {
+    hangTwigs(
+      end,
+      dir.clone().add(new THREE.Vector3(-0.2 - rand() * 0.2, -0.4, rand() - 0.5)).normalize(),
+      length * 0.55,
+      radius * 0.55,
       depth + 1,
-      maxDepth,
       rand,
       limbs,
       flowers,
@@ -162,12 +161,14 @@ function spawnFlower(
   b: THREE.Vector3,
   dir: THREE.Vector3,
   rand: () => number,
-  scatter = 0.14,
+  scatter = 0.06,
 ): FlowerSpawn {
-  const position = a
-    .clone()
-    .lerp(b, rand())
-    .add(new THREE.Vector3(rand() - 0.5, rand() - 0.15, rand() - 0.5).multiplyScalar(scatter))
+  const position = clampPoint(
+    a
+      .clone()
+      .lerp(b, rand())
+      .add(new THREE.Vector3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(scatter)),
+  )
   const normal = dir
     .clone()
     .add(new THREE.Vector3(rand() - 0.5, rand() * 0.8, rand() - 0.5))
@@ -180,15 +181,9 @@ function spawnFlower(
   return {
     position,
     quaternion,
-    scale: 0.055 + rand() * 0.07,
+    scale: 0.028 + rand() * 0.034,
     color: new THREE.Color(palette[Math.floor(rand() * palette.length)]),
   }
-}
-
-function canopyBounds(flowers: FlowerSpawn[]) {
-  const box = new THREE.Box3()
-  for (const flower of flowers) box.expandByPoint(flower.position)
-  return box
 }
 
 export function mountSakura(
@@ -207,81 +202,106 @@ export function mountSakura(
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(0xffeef4, 0.028)
+  scene.fog = new THREE.FogExp2(0xffeef4, 0.02)
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 40)
+  camera.position.set(0, 0, 8)
+  camera.lookAt(0, 0, 0)
 
   scene.add(new THREE.AmbientLight(0xffe6ef, 0.72))
-  const hemi = new THREE.HemisphereLight(0xffd6e8, 0x6b4a38, 0.85)
-  scene.add(hemi)
+  scene.add(new THREE.HemisphereLight(0xffd6e8, 0x6b4a38, 0.85))
   const key = new THREE.DirectionalLight(0xfff1e4, 1.15)
-  key.position.set(5.4, 5.2, 3.8)
+  key.position.set(4, 3, 4)
   scene.add(key)
-  const rim = new THREE.DirectionalLight(0xffb3c9, 0.55)
-  rim.position.set(-2.4, 1.6, -4)
+  const rim = new THREE.DirectionalLight(0xffb3c9, 0.5)
+  rim.position.set(-2, 1, -3)
   scene.add(rim)
-  const glow = new THREE.PointLight(0xff9eb5, 1.4, 12, 1.6)
-  glow.position.set(2.6, 3.2, 1.1)
+  const glow = new THREE.PointLight(0xff9eb5, 1.2, 10, 1.6)
+  glow.position.set(2.4, 1.6, 1)
   scene.add(glow)
 
   const compact = window.innerWidth < 800
   const rand = mulberry32(20260921)
   const limbs: THREE.BufferGeometry[] = []
   const flowers: FlowerSpawn[] = []
-  const maxDepth = compact ? 4 : 5
 
-  // Thick limb enters from off-screen top-right and hangs down into view.
-  const crown = new THREE.Vector3(3.7, 3.55, 0)
-  grow(
-    crown.clone().add(new THREE.Vector3(1.15, 1.35, 0.1)),
-    new THREE.Vector3(-0.62, -0.72, -0.04),
-    compact ? 2.05 : 2.45,
-    0.145,
-    0,
-    maxDepth,
-    rand,
-    limbs,
-    flowers,
-  )
-  grow(
-    crown.clone().add(new THREE.Vector3(0.85, 1.05, -0.22)),
-    new THREE.Vector3(-0.38, -0.9, 0.08),
-    compact ? 1.55 : 1.9,
-    0.05,
-    1,
-    maxDepth,
-    rand,
-    limbs,
-    flowers,
-  )
-  grow(
-    crown.clone().add(new THREE.Vector3(0.55, 0.72, 0.24)),
-    new THREE.Vector3(-0.72, -0.55, -0.1),
-    compact ? 1.35 : 1.7,
-    0.038,
-    2,
-    maxDepth,
-    rand,
-    limbs,
-    flowers,
-  )
+  const hangs: { radius: number; points: [number, number, number][] }[] = [
+    {
+      radius: 0.034,
+      points: [
+        [0.22, 0.28, 0.04],
+        [0.1, 0.06, 0.03],
+        [-0.04, -0.22, 0.02],
+        [-0.14, -0.52, 0.01],
+        [-0.2, -0.82, 0],
+        [-0.22, -1.08, -0.01],
+      ],
+    },
+    {
+      radius: 0.016,
+      points: [
+        [0.16, 0.2, -0.05],
+        [0.02, -0.06, -0.04],
+        [-0.12, -0.36, -0.03],
+        [-0.22, -0.64, -0.02],
+        [-0.28, -0.9, -0.02],
+      ],
+    },
+    {
+      radius: 0.012,
+      points: [
+        [0.12, 0.14, 0.06],
+        [-0.02, -0.12, 0.05],
+        [-0.16, -0.4, 0.04],
+        [-0.26, -0.68, 0.03],
+        [-0.32, -0.92, 0.02],
+      ],
+    },
+    {
+      radius: 0.01,
+      points: [
+        [0.08, 0.08, -0.07],
+        [-0.06, -0.18, -0.06],
+        [-0.18, -0.44, -0.05],
+        [-0.26, -0.7, -0.04],
+      ],
+    },
+  ]
+
+  for (const hang of hangs) {
+    const pts = hang.points.map(([x, y, z]) => new THREE.Vector3(x, y, z))
+    addPolyline(pts, hang.radius, limbs, flowers, rand, true)
+    const tip = pts[pts.length - 1]
+    const along = tip.clone().sub(pts[0]).normalize()
+    hangTwigs(
+      tip,
+      along.add(new THREE.Vector3(-0.15, -0.4, 0)).normalize(),
+      compact ? 0.18 : 0.24,
+      hang.radius * 0.4,
+      0,
+      rand,
+      limbs,
+      flowers,
+    )
+  }
 
   const barkGeometry = mergeGeometries(limbs)
   for (const limb of limbs) limb.dispose()
   const tree = new THREE.Group()
   if (barkGeometry) {
-    const bark = new THREE.Mesh(
-      barkGeometry,
-      new THREE.MeshStandardMaterial({
-        color: 0x4a3228,
-        roughness: 0.92,
-        metalness: 0.02,
-      }),
+    tree.add(
+      new THREE.Mesh(
+        barkGeometry,
+        new THREE.MeshStandardMaterial({
+          color: 0x4a3228,
+          roughness: 0.92,
+          metalness: 0.02,
+        }),
+      ),
     )
-    tree.add(bark)
   }
 
-  const blossomCount = Math.min(flowers.length, compact ? 1100 : 2200)
+  const blossomCount = Math.min(flowers.length, compact ? 900 : 1800)
   const flowerGeometry = createFlowerGeometry()
   const flowerMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
@@ -311,8 +331,7 @@ export function mountSakura(
   tree.add(blossoms)
   scene.add(tree)
 
-  const bounds = canopyBounds(flowers.slice(0, blossomCount))
-  const fallCount = options.reducedMotion ? 0 : compact ? 90 : 170
+  const fallCount = options.reducedMotion ? 0 : compact ? 80 : 150
   const petalGeometry = createPetalGeometry()
   const petalMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xffc2d4,
@@ -327,16 +346,16 @@ export function mountSakura(
   falling.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
   const fallers: Faller[] = []
   const resetFaller = (petal: Faller, first = false) => {
-    petal.x = bounds.min.x + rand() * Math.max(0.4, bounds.max.x - bounds.min.x + 0.6)
-    petal.y = first ? bounds.min.y + rand() * 3.6 : bounds.max.y + rand() * 0.7
-    petal.z = bounds.min.z + rand() * Math.max(0.3, bounds.max.z - bounds.min.z)
-    petal.vx = -(0.1 + rand() * 0.2)
-    petal.vy = -(0.18 + rand() * 0.2)
-    petal.vz = (rand() - 0.5) * 0.12
+    petal.x = 0.55 + rand() * 0.55
+    petal.y = first ? -0.2 - rand() * 1.4 : 0.15 + rand() * 0.2
+    petal.z = (rand() - 0.5) * 0.3
+    petal.vx = -(0.04 + rand() * 0.08)
+    petal.vy = -(0.16 + rand() * 0.18)
+    petal.vz = (rand() - 0.5) * 0.08
     petal.spin = rand() * Math.PI * 2
     petal.tilt = rand() * Math.PI
     petal.phase = rand() * Math.PI * 2
-    petal.scale = 0.08 + rand() * 0.07
+    petal.scale = 0.035 + rand() * 0.03
   }
   for (let i = 0; i < fallCount; i += 1) {
     const petal: Faller = {
@@ -354,7 +373,9 @@ export function mountSakura(
     resetFaller(petal, true)
     fallers.push(petal)
   }
-  scene.add(falling)
+  const petalGroup = new THREE.Group()
+  petalGroup.add(falling)
+  scene.add(petalGroup)
 
   const setSize = () => {
     const width = canvas.clientWidth || window.innerWidth
@@ -363,15 +384,18 @@ export function mountSakura(
     renderer.setSize(width, height, false)
     const aspect = width / Math.max(1, height)
     camera.aspect = aspect
-    const dist = 7.6
+    camera.position.set(0, 0, 8)
+    camera.lookAt(0, 0, 0)
+    camera.updateProjectionMatrix()
+    const dist = camera.position.z
     const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
     const halfW = halfH * aspect
-    // Pin the crown to the upper-right so limbs enter from the top-right.
-    const camX = crown.x - halfW * 0.72
-    const camY = crown.y - halfH * 0.58
-    camera.position.set(camX, camY, dist)
-    camera.lookAt(camX, camY, 0)
-    camera.updateProjectionMatrix()
+    const scale = Math.min(halfW * 0.7, halfH * 0.9)
+    // Local origin sits on the top-right corner — trunk never enters from the left.
+    tree.position.set(halfW * 0.98, halfH * 1.05, 0)
+    tree.scale.setScalar(scale)
+    petalGroup.position.copy(tree.position)
+    petalGroup.scale.setScalar(scale)
   }
   setSize()
 
@@ -387,8 +411,8 @@ export function mountSakura(
       for (let i = 0; i < blossomCount; i += 1) {
         const flower = flowers[i]
         dummy.position.copy(basePositions[i])
-        dummy.position.x += Math.sin(t * 0.7 + i * 0.17) * 0.012
-        dummy.position.y += Math.sin(t * 0.9 + i * 0.11) * 0.01
+        dummy.position.x += Math.sin(t * 0.7 + i * 0.17) * 0.006
+        dummy.position.y += Math.sin(t * 0.9 + i * 0.11) * 0.005
         dummy.quaternion.copy(flower.quaternion)
         dummy.rotateZ(Math.sin(t * 1.1 + i) * 0.08)
         dummy.scale.setScalar(flower.scale)
@@ -399,12 +423,12 @@ export function mountSakura(
 
       for (let i = 0; i < fallers.length; i += 1) {
         const petal = fallers[i]
-        petal.x += (petal.vx + Math.sin(now * 0.001 + petal.phase) * 0.18) * dt
+        petal.x += (petal.vx + Math.sin(now * 0.001 + petal.phase) * 0.08) * dt
         petal.y += petal.vy * dt
         petal.z += petal.vz * dt
         petal.spin += dt * 1.4
         petal.tilt += dt * 0.9
-        if (petal.y < -2.8 || petal.x < -4.8) resetFaller(petal)
+        if (petal.y < -1.6 || petal.x < -1.2) resetFaller(petal)
         dummy.position.set(petal.x, petal.y, petal.z)
         dummy.rotation.set(petal.tilt, petal.spin, petal.phase)
         dummy.scale.setScalar(petal.scale)
