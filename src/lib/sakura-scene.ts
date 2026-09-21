@@ -113,7 +113,7 @@ function addPolyline(
     const t1 = (i + 1) / Math.max(1, points.length - 1)
     limbs.push(makeLimb(a, b, radius * (1 - t0 * 0.35), radius * (1 - t1 * 0.4)))
     if (bloom) {
-      const count = 3 + Math.floor(rand() * 4)
+      const count = 5 + Math.floor(rand() * 6)
       for (let k = 0; k < count; k += 1) {
         flowers.push(spawnFlower(a, b, b.clone().sub(a).normalize(), rand))
       }
@@ -183,7 +183,7 @@ function spawnFlower(
   return {
     position,
     quaternion,
-    scale: 0.028 + rand() * 0.034,
+    scale: 0.036 + rand() * 0.04,
     color: new THREE.Color(palette[Math.floor(rand() * palette.length)]),
   }
 }
@@ -227,60 +227,64 @@ export function mountSakura(
   const limbs: THREE.BufferGeometry[] = []
   const flowers: FlowerSpawn[] = []
 
-  // Off-screen right / top-right → hang down. No bottom-left trunk.
+  // Off-screen right / top-right → hang down into the upper-right. No bottom-left trunk.
   const hangs: { radius: number; points: [number, number, number][] }[] = [
     {
-      radius: 0.062,
+      radius: 0.036,
       points: [
-        [0.48, 0.32, 0.05],
-        [0.28, 0.08, 0.04],
-        [0.12, -0.22, 0.03],
-        [0.02, -0.52, 0.02],
-        [-0.06, -0.86, 0.01],
-        [-0.12, -1.22, 0],
-        [-0.14, -1.48, -0.01],
+        [0.52, 0.3, 0.04],
+        [0.34, 0.06, 0.03],
+        [0.2, -0.22, 0.02],
+        [0.12, -0.52, 0.01],
+        [0.08, -0.84, 0],
       ],
     },
     {
-      radius: 0.028,
+      radius: 0.022,
       points: [
-        [0.36, 0.22, -0.06],
-        [0.14, -0.06, -0.05],
-        [-0.08, -0.36, -0.04],
-        [-0.28, -0.68, -0.03],
-        [-0.46, -0.98, -0.02],
-        [-0.56, -1.26, -0.02],
+        [0.26, 0.26, -0.05],
+        [0.06, 0.04, -0.04],
+        [-0.16, -0.16, -0.03],
+        [-0.38, -0.34, -0.02],
+        [-0.56, -0.5, -0.02],
       ],
     },
     {
-      radius: 0.02,
+      radius: 0.018,
       points: [
-        [0.24, 0.16, 0.07],
-        [0.02, -0.14, 0.06],
-        [-0.22, -0.44, 0.05],
-        [-0.44, -0.76, 0.04],
-        [-0.62, -1.08, 0.03],
-        [-0.7, -1.34, 0.02],
-      ],
-    },
-    {
-      radius: 0.016,
-      points: [
-        [0.18, 0.08, -0.08],
-        [-0.04, -0.2, -0.07],
-        [-0.26, -0.5, -0.06],
-        [-0.44, -0.82, -0.05],
-        [-0.58, -1.12, -0.04],
+        [0.18, 0.18, 0.06],
+        [-0.02, -0.02, 0.05],
+        [-0.24, -0.22, 0.04],
+        [-0.46, -0.4, 0.03],
+        [-0.64, -0.58, 0.02],
       ],
     },
     {
       radius: 0.014,
       points: [
-        [0.42, 0.1, 0.02],
-        [0.34, -0.22, 0.01],
-        [0.28, -0.58, 0],
-        [0.24, -0.96, -0.01],
-        [0.22, -1.28, -0.02],
+        [0.32, 0.14, 0.02],
+        [0.1, -0.06, 0.01],
+        [-0.12, -0.26, 0],
+        [-0.32, -0.44, -0.01],
+        [-0.48, -0.6, -0.01],
+      ],
+    },
+    {
+      radius: 0.012,
+      points: [
+        [0.42, 0.1, -0.06],
+        [0.32, -0.16, -0.05],
+        [0.26, -0.44, -0.04],
+        [0.22, -0.74, -0.03],
+      ],
+    },
+    {
+      radius: 0.01,
+      points: [
+        [0.12, 0.1, 0.08],
+        [-0.1, -0.08, 0.07],
+        [-0.3, -0.26, 0.06],
+        [-0.5, -0.42, 0.05],
       ],
     },
   ]
