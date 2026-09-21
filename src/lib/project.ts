@@ -1,3 +1,5 @@
+import type { DecodedGif } from '@/lib/gif-decode'
+import { laterFrame, quantizeLayerToFrames } from '@/lib/frames'
 import { createId } from '@/lib/ids'
 import { defaultKeyframe, sampleLayer } from '@/lib/interpolation'
 import type { Keyframe, Layer, MediaItem, MemeProject, MotionPreset } from '@/types/meme'
@@ -42,76 +44,108 @@ function baseLayer(partial: Partial<Layer> & Pick<Layer, 'text' | 'keyframes'>):
     strokeColor: partial.strokeColor ?? '#1a0b12',
     strokeWidth: partial.strokeWidth ?? 0.07,
     align: partial.align ?? 'center',
-    ease: partial.ease ?? 'smooth',
     inTime: partial.inTime ?? 0.12,
     outTime: partial.outTime ?? 1,
     keyframes: partial.keyframes,
   }
 }
 
-export function createProject(media: MediaItem, durationMs: number): MemeProject {
-  return {
-    media,
+export function createProject(
+  media: MediaItem,
+  durationMs: number,
+  gif: DecodedGif | null = null,
+): MemeProject {
+  const layer = quantizeLayerToFrames(
+    baseLayer({
+      text: 'YOUR TEXT',
+      fontSize: 0.1,
+      keyframes: [defaultKeyframe({ time: 0.12, y: 0.78 })],
+    }),
     durationMs,
-    layers: [
-      baseLayer({
-        text: 'YOUR TEXT',
-        fontSize: 0.1,
-        keyframes: [defaultKeyframe({ time: 0.12, y: 0.78 })],
-      }),
-    ],
-  }
+    gif,
+  )
+  return { media, durationMs, layers: [layer] }
 }
 
-export function createTextLayer(text = 'YOUR TEXT'): Layer {
-  return baseLayer({
-    text,
-    keyframes: [defaultKeyframe({ time: 0.12, y: 0.72 })],
-  })
+export function createTextLayer(
+  text = 'YOUR TEXT',
+  durationMs = 2500,
+  gif: DecodedGif | null = null,
+): Layer {
+  return quantizeLayerToFrames(
+    baseLayer({
+      text,
+      keyframes: [defaultKeyframe({ time: 0.12, y: 0.72 })],
+    }),
+    durationMs,
+    gif,
+  )
 }
 
-export function createEmojiLayer(emoji: string): Layer {
-  return baseLayer({
-    kind: 'emoji',
-    text: emoji,
-    fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
-    fontSize: 0.16,
-    strokeWidth: 0,
-    inTime: 0.08,
-    keyframes: [
-      defaultKeyframe({ time: 0.08, scale: 0.4, opacity: 0, y: 0.45 }),
-      defaultKeyframe({ time: 0.22, scale: 1, opacity: 1, y: 0.45 }),
-    ],
-  })
+export function createEmojiLayer(
+  emoji: string,
+  durationMs = 2500,
+  gif: DecodedGif | null = null,
+): Layer {
+  const start = 0.08
+  return quantizeLayerToFrames(
+    baseLayer({
+      kind: 'emoji',
+      text: emoji,
+      fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+      fontSize: 0.16,
+      strokeWidth: 0,
+      inTime: start,
+      keyframes: [
+        defaultKeyframe({ time: start, scale: 0.4, opacity: 0, y: 0.45 }),
+        defaultKeyframe({ time: start + 0.14, scale: 1, opacity: 1, y: 0.45 }),
+      ],
+    }),
+    durationMs,
+    gif,
+  )
 }
 
-export function applyMotion(layer: Layer, preset: MotionPreset): Layer {
+export function applyMotion(
+  layer: Layer,
+  preset: MotionPreset,
+  durationMs: number,
+  gif: DecodedGif | null,
+): Layer {
   const current = sampleLayer(layer, Math.max(layer.inTime, 0.5))
   const x = current.x
   const y = current.y
   const start = layer.inTime
+  const two = laterFrame(start, 2, durationMs, gif)
+  const three = laterFrame(start, 3, durationMs, gif)
+  const four = laterFrame(start, 4, durationMs, gif)
 
   const hold: Keyframe[] = [defaultKeyframe({ time: start, x, y })]
   const fadeIn: Keyframe[] = [
     defaultKeyframe({ time: start, x, y, opacity: 0, scale: 0.94 }),
-    defaultKeyframe({ time: Math.min(1, start + 0.18), x, y, opacity: 1, scale: 1 }),
+    defaultKeyframe({ time: two, x, y, opacity: 1, scale: 1 }),
   ]
   const slideUp: Keyframe[] = [
     defaultKeyframe({ time: start, x, y: Math.min(1, y + 0.14), opacity: 0 }),
-    defaultKeyframe({ time: Math.min(1, start + 0.2), x, y, opacity: 1 }),
+    defaultKeyframe({ time: three, x, y, opacity: 1 }),
   ]
   const slideDown: Keyframe[] = [
     defaultKeyframe({ time: start, x, y: Math.max(0, y - 0.14), opacity: 0 }),
-    defaultKeyframe({ time: Math.min(1, start + 0.2), x, y, opacity: 1 }),
+    defaultKeyframe({ time: three, x, y, opacity: 1 }),
   ]
   const pop: Keyframe[] = [
     defaultKeyframe({ time: start, x, y, scale: 0.2, opacity: 0 }),
-    defaultKeyframe({ time: Math.min(1, start + 0.12), x, y, scale: 1.1, opacity: 1 }),
-    defaultKeyframe({ time: Math.min(1, start + 0.22), x, y, scale: 1, opacity: 1 }),
+    defaultKeyframe({ time: two, x, y, scale: 1.1, opacity: 1 }),
+    defaultKeyframe({ time: four, x, y, scale: 1, opacity: 1 }),
   ]
   const drift: Keyframe[] = [
     defaultKeyframe({ time: start, x: clamp01(x - 0.08), y, opacity: 1 }),
-    defaultKeyframe({ time: layer.outTime, x: clamp01(x + 0.08), y: clamp01(y - 0.04), opacity: 1 }),
+    defaultKeyframe({
+      time: layer.outTime >= 1 ? laterFrame(start, Math.max(3, discreteSpan(durationMs, gif) - 1), durationMs, gif) : layer.outTime,
+      x: clamp01(x + 0.08),
+      y: clamp01(y - 0.04),
+      opacity: 1,
+    }),
   ]
 
   const keyframes =
@@ -127,7 +161,11 @@ export function applyMotion(layer: Layer, preset: MotionPreset): Layer {
               ? drift
               : hold
 
-  return { ...layer, keyframes }
+  return quantizeLayerToFrames({ ...layer, keyframes }, durationMs, gif)
+}
+
+function discreteSpan(durationMs: number, gif: DecodedGif | null): number {
+  return gif?.frames.length ?? Math.max(4, Math.round((durationMs / 1000) * 12))
 }
 
 function clamp01(value: number): number {
