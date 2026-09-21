@@ -357,7 +357,7 @@ export const part = [
   '6+jAfh4i4b15dvKQEEJJI8JoDI71McH6',
   't276SSX5IVmUo6mX6K83lY9cvTUfP43B',
   'XhiPUtpKxdgK7pKRFf7SN9offgvb02ry',
-  '75Um5c8OQ5YKFAEGDO4MP1gRX+lwJTaX',
+  '75Um5c8OQ5YKFAEGDO4MP1gRX+rwJTaX',
   'lMDcCgod3y8M3v1+D0+LLLHw+nt1er7f',
   'jRiDctKBFy1rNZB386F+w/lMAqMTcuJg',
   '59orTsQ/fxF42rUpAzmiQe/PoKvtjeOX',
