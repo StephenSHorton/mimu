@@ -1,14 +1,15 @@
 {
   "name": "mimu",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
     "lint": "oxlint",
     "preview": "vite preview",
-    "generate:demo": "node scripts/generate-demo-gif.mjs"
+    "generate:demo": "node scripts/generate-demo-gif.mjs",
+    "test:discrete": "node scripts/assert-discrete-motion.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
