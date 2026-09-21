@@ -7,7 +7,7 @@ export const part = [
   'KKzcB3vTQTqN35/Mtlys1xJZJuzf4j14',
   'Tjne7dW9LZ+a4xdwF3HLulYFrx3F2SsJ',
   'USE/KiaHMqsP0l+43PTw1lKhaCUf44uW',
-  '1FSyKqWsEgdgNhw45WCs+3qsg4TEIXKk',
+  '1FSyKqWsEgdgNnw45WCs+3qsg4TEIXKk',
   'j0zbv21KrIWJnKaQdRR+HgbRwyEXU4Qr',
   'zSRdBzmJ/wBI8PV7m9T6rvW7xP7PRMeZ',
   'bjdTiS7+PMfce3YH1rxvXSm4hEQrOFm4',
