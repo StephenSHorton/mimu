@@ -25,8 +25,9 @@ type Faller = {
   scale: number
 }
 
-/** Local space: (0,0) is the top-right corner. +X is off-screen right, -Y is down. */
-const LEFTMOST = -0.38
+/** Local space: (0,0) is the top-right corner. +X is off-screen right, -Y is down.
+ *  Wood may occupy the right third. Nothing is allowed left of this. */
+const LEFTMOST = -0.72
 
 function mulberry32(seed: number) {
   let a = seed >>> 0
@@ -130,23 +131,24 @@ function hangTwigs(
   limbs: THREE.BufferGeometry[],
   flowers: FlowerSpawn[],
 ) {
-  if (depth > 2 || radius < 0.004 || origin.x < LEFTMOST + 0.02) return
+  if (depth > 2 || radius < 0.004 || origin.x < LEFTMOST + 0.05) return
   const dir = direction.clone().normalize()
-  dir.y = -Math.abs(dir.y) - 0.15
-  dir.x = Math.min(0.05, dir.x)
+  dir.y = -Math.abs(dir.y) - 0.45
+  // Hang down. Drift left only while still on the right third.
+  dir.x = origin.x < -0.42 ? Math.max(0, dir.x) * 0.15 : Math.min(-0.05, dir.x)
   dir.normalize()
   const end = clampPoint(origin.clone().add(dir.multiplyScalar(length)))
   if (end.x < LEFTMOST) return
   limbs.push(makeLimb(origin, end, radius, radius * 0.55))
-  const buds = 2 + Math.floor(rand() * 3)
+  const buds = 3 + Math.floor(rand() * 4)
   for (let k = 0; k < buds; k += 1) {
     flowers.push(spawnFlower(origin, end, dir, rand, 0.08))
   }
   if (depth < 2) {
     hangTwigs(
       end,
-      dir.clone().add(new THREE.Vector3(-0.2 - rand() * 0.2, -0.4, rand() - 0.5)).normalize(),
-      length * 0.55,
+      dir.clone().add(new THREE.Vector3(-0.08 - rand() * 0.12, -0.55, rand() - 0.5)).normalize(),
+      length * 0.58,
       radius * 0.55,
       depth + 1,
       rand,
@@ -225,45 +227,60 @@ export function mountSakura(
   const limbs: THREE.BufferGeometry[] = []
   const flowers: FlowerSpawn[] = []
 
+  // Off-screen right / top-right → hang down. No bottom-left trunk.
   const hangs: { radius: number; points: [number, number, number][] }[] = [
     {
-      radius: 0.034,
+      radius: 0.062,
       points: [
-        [0.22, 0.28, 0.04],
-        [0.1, 0.06, 0.03],
-        [-0.04, -0.22, 0.02],
-        [-0.14, -0.52, 0.01],
-        [-0.2, -0.82, 0],
-        [-0.22, -1.08, -0.01],
+        [0.48, 0.32, 0.05],
+        [0.28, 0.08, 0.04],
+        [0.12, -0.22, 0.03],
+        [0.02, -0.52, 0.02],
+        [-0.06, -0.86, 0.01],
+        [-0.12, -1.22, 0],
+        [-0.14, -1.48, -0.01],
+      ],
+    },
+    {
+      radius: 0.028,
+      points: [
+        [0.36, 0.22, -0.06],
+        [0.14, -0.06, -0.05],
+        [-0.08, -0.36, -0.04],
+        [-0.28, -0.68, -0.03],
+        [-0.46, -0.98, -0.02],
+        [-0.56, -1.26, -0.02],
+      ],
+    },
+    {
+      radius: 0.02,
+      points: [
+        [0.24, 0.16, 0.07],
+        [0.02, -0.14, 0.06],
+        [-0.22, -0.44, 0.05],
+        [-0.44, -0.76, 0.04],
+        [-0.62, -1.08, 0.03],
+        [-0.7, -1.34, 0.02],
       ],
     },
     {
       radius: 0.016,
       points: [
-        [0.16, 0.2, -0.05],
-        [0.02, -0.06, -0.04],
-        [-0.12, -0.36, -0.03],
-        [-0.22, -0.64, -0.02],
-        [-0.28, -0.9, -0.02],
+        [0.18, 0.08, -0.08],
+        [-0.04, -0.2, -0.07],
+        [-0.26, -0.5, -0.06],
+        [-0.44, -0.82, -0.05],
+        [-0.58, -1.12, -0.04],
       ],
     },
     {
-      radius: 0.012,
+      radius: 0.014,
       points: [
-        [0.12, 0.14, 0.06],
-        [-0.02, -0.12, 0.05],
-        [-0.16, -0.4, 0.04],
-        [-0.26, -0.68, 0.03],
-        [-0.32, -0.92, 0.02],
-      ],
-    },
-    {
-      radius: 0.01,
-      points: [
-        [0.08, 0.08, -0.07],
-        [-0.06, -0.18, -0.06],
-        [-0.18, -0.44, -0.05],
-        [-0.26, -0.7, -0.04],
+        [0.42, 0.1, 0.02],
+        [0.34, -0.22, 0.01],
+        [0.28, -0.58, 0],
+        [0.24, -0.96, -0.01],
+        [0.22, -1.28, -0.02],
       ],
     },
   ]
@@ -276,7 +293,7 @@ export function mountSakura(
     hangTwigs(
       tip,
       along.add(new THREE.Vector3(-0.15, -0.4, 0)).normalize(),
-      compact ? 0.18 : 0.24,
+      compact ? 0.22 : 0.32,
       hang.radius * 0.4,
       0,
       rand,
@@ -390,9 +407,9 @@ export function mountSakura(
     const dist = camera.position.z
     const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
     const halfW = halfH * aspect
-    const scale = Math.min(halfW * 0.7, halfH * 0.9)
+    const scale = Math.min(halfW * 1.05, halfH * 1.22)
     // Local origin sits on the top-right corner — trunk never enters from the left.
-    tree.position.set(halfW * 0.98, halfH * 1.05, 0)
+    tree.position.set(halfW * 0.995, halfH * 1.03, 0)
     tree.scale.setScalar(scale)
     petalGroup.position.copy(tree.position)
     petalGroup.scale.setScalar(scale)
