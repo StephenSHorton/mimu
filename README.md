@@ -4,7 +4,7 @@ A free [gifntext](https://gifntext.com)-style GIF text editor. The name is Japan
 
 Imgflip is only the “free, no paywall” idea — not the product. Mimu does not call Giphy, Imgur, or any other media API.
 
-A Three.js cherry blossom tree sits behind the UI. Petals fall instead of flat blossom icons. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
+A Three.js cherry blossom sits on the right: branches come down from the top right, behind the UI. Petals fall instead of flat blossom icons. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
 
 ## Run locally
 
@@ -36,11 +36,11 @@ Everything runs in the browser. Your file is not uploaded to a server.
 
 The live site is **https://stephenshorton.github.io/mimu/**.
 
-Deploys run only when a version tag is pushed (`v1.1.0`, …) — not on every `main` push. The workflow is `.github/workflows/deploy-pages.yml`. It sets `VITE_BASE_PATH=/mimu/` and bakes `VITE_APP_VERSION` from the tag so the nav shows e.g. `v1.1.0`.
+Deploys run only when a version tag is pushed (`v1.2.0`, …) — not on every `main` push. The workflow is `.github/workflows/deploy-pages.yml`. It sets `VITE_BASE_PATH=/mimu/` and bakes `VITE_APP_VERSION` from the tag so the nav shows e.g. `v1.2.0`.
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 Changing `.github/pages-release` bootstraps a Pages deploy when a `GITHUB_TOKEN` tag push cannot start the tag workflow.

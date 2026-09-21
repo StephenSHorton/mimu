@@ -100,7 +100,7 @@ function grow(
   limbs: THREE.BufferGeometry[],
   flowers: FlowerSpawn[],
 ) {
-  const segments = depth === 0 ? 5 : depth < 3 ? 4 : 3
+  const segments = depth === 0 ? 6 : depth < 3 ? 4 : 3
   let point = start.clone()
   let dir = direction.clone().normalize()
 
@@ -108,9 +108,9 @@ function grow(
     dir
       .add(
         new THREE.Vector3(
-          (rand() - 0.28) * 0.38,
-          0.07 + (rand() - 0.42) * 0.14,
-          (rand() - 0.5) * 0.3,
+          (rand() - 0.58) * 0.22,
+          -0.12 + (rand() - 0.5) * 0.12,
+          (rand() - 0.5) * 0.2,
         ),
       )
       .normalize()
@@ -119,8 +119,8 @@ function grow(
     const t1 = (i + 1) / segments
     limbs.push(makeLimb(point, next, radius * (1 - t0 * 0.2), radius * (1 - t1 * 0.22)))
 
-    if (depth >= 2 && (depth >= 3 || i >= segments - 2)) {
-      const count = depth >= 4 ? 4 + Math.floor(rand() * 5) : 2 + Math.floor(rand() * 3)
+    if (depth >= 1 || i >= segments - 2) {
+      const count = depth >= 3 ? 6 + Math.floor(rand() * 6) : 3 + Math.floor(rand() * 4)
       for (let k = 0; k < count; k += 1) {
         flowers.push(spawnFlower(point, next, dir, rand))
       }
@@ -129,25 +129,25 @@ function grow(
   }
 
   if (depth >= maxDepth || radius < 0.02) {
-    const tips = 6 + Math.floor(rand() * 7)
+    const tips = 8 + Math.floor(rand() * 8)
     for (let k = 0; k < tips; k += 1) {
       flowers.push(spawnFlower(point, point.clone().add(dir), dir, rand, 0.22))
     }
     return
   }
 
-  const childCount = depth === 0 ? 4 : depth === 1 ? 3 : 2 + (rand() > 0.5 ? 1 : 0)
+  const childCount = depth === 0 ? 4 : depth === 1 ? 3 : 2 + (rand() > 0.55 ? 1 : 0)
   for (let c = 0; c < childCount; c += 1) {
-    const axis = new THREE.Vector3(rand() - 0.5, rand() * 0.45, rand() - 0.5).normalize()
-    const childDir = dir.clone().applyAxisAngle(axis, 0.32 + rand() * 0.62)
-    childDir.y = Math.abs(childDir.y) * 0.5 + 0.28
-    childDir.x += 0.22
+    const axis = new THREE.Vector3(rand() - 0.5, rand() - 0.65, rand() - 0.5).normalize()
+    const childDir = dir.clone().applyAxisAngle(axis, 0.22 + rand() * 0.48)
+    childDir.y = -Math.abs(childDir.y) * 0.7 - 0.18
+    childDir.x -= 0.12
     childDir.normalize()
     grow(
       point,
       childDir,
-      length * (0.56 + rand() * 0.24),
-      radius * (0.46 + rand() * 0.16),
+      length * (0.46 + rand() * 0.16),
+      radius * (0.48 + rand() * 0.14),
       depth + 1,
       maxDepth,
       rand,
@@ -180,7 +180,7 @@ function spawnFlower(
   return {
     position,
     quaternion,
-    scale: 0.042 + rand() * 0.055,
+    scale: 0.055 + rand() * 0.07,
     color: new THREE.Color(palette[Math.floor(rand() * palette.length)]),
   }
 }
@@ -207,23 +207,21 @@ export function mountSakura(
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
   const scene = new THREE.Scene()
-  scene.fog = new THREE.FogExp2(0xffeef4, 0.032)
+  scene.fog = new THREE.FogExp2(0xffeef4, 0.028)
 
-  const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 40)
-  camera.position.set(1.55, 1.35, 7.1)
-  camera.lookAt(0.15, 2.05, 0)
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 40)
 
   scene.add(new THREE.AmbientLight(0xffe6ef, 0.72))
   const hemi = new THREE.HemisphereLight(0xffd6e8, 0x6b4a38, 0.85)
   scene.add(hemi)
   const key = new THREE.DirectionalLight(0xfff1e4, 1.15)
-  key.position.set(4.2, 6.4, 3.4)
+  key.position.set(5.4, 5.2, 3.8)
   scene.add(key)
   const rim = new THREE.DirectionalLight(0xffb3c9, 0.55)
-  rim.position.set(-3.2, 2.2, -4)
+  rim.position.set(-2.4, 1.6, -4)
   scene.add(rim)
   const glow = new THREE.PointLight(0xff9eb5, 1.4, 12, 1.6)
-  glow.position.set(-0.6, 3.4, 0.8)
+  glow.position.set(2.6, 3.2, 1.1)
   scene.add(glow)
 
   const compact = window.innerWidth < 800
@@ -232,11 +230,13 @@ export function mountSakura(
   const flowers: FlowerSpawn[] = []
   const maxDepth = compact ? 4 : 5
 
+  // Thick limb enters from off-screen top-right and hangs down into view.
+  const crown = new THREE.Vector3(3.7, 3.55, 0)
   grow(
-    new THREE.Vector3(-3.55, -2.15, 0.15),
-    new THREE.Vector3(0.28, 1, -0.04),
-    compact ? 2.15 : 2.55,
-    0.17,
+    crown.clone().add(new THREE.Vector3(1.15, 1.35, 0.1)),
+    new THREE.Vector3(-0.62, -0.72, -0.04),
+    compact ? 2.05 : 2.45,
+    0.145,
     0,
     maxDepth,
     rand,
@@ -244,21 +244,21 @@ export function mountSakura(
     flowers,
   )
   grow(
-    new THREE.Vector3(-3.2, -0.15, 0.05),
-    new THREE.Vector3(0.92, 0.28, 0.12),
-    compact ? 2.4 : 3.15,
-    0.055,
-    2,
+    crown.clone().add(new THREE.Vector3(0.85, 1.05, -0.22)),
+    new THREE.Vector3(-0.38, -0.9, 0.08),
+    compact ? 1.55 : 1.9,
+    0.05,
+    1,
     maxDepth,
     rand,
     limbs,
     flowers,
   )
   grow(
-    new THREE.Vector3(-2.4, 0.85, -0.2),
-    new THREE.Vector3(0.72, 0.55, -0.35),
-    compact ? 1.8 : 2.4,
-    0.04,
+    crown.clone().add(new THREE.Vector3(0.55, 0.72, 0.24)),
+    new THREE.Vector3(-0.72, -0.55, -0.1),
+    compact ? 1.35 : 1.7,
+    0.038,
     2,
     maxDepth,
     rand,
@@ -327,10 +327,10 @@ export function mountSakura(
   falling.instanceMatrix.setUsage(THREE.DynamicDrawUsage)
   const fallers: Faller[] = []
   const resetFaller = (petal: Faller, first = false) => {
-    petal.x = bounds.min.x + rand() * Math.max(0.4, bounds.max.x - bounds.min.x + 1.8)
-    petal.y = first ? bounds.min.y + rand() * 4.2 : bounds.max.y + rand() * 0.8
+    petal.x = bounds.min.x + rand() * Math.max(0.4, bounds.max.x - bounds.min.x + 0.6)
+    petal.y = first ? bounds.min.y + rand() * 3.6 : bounds.max.y + rand() * 0.7
     petal.z = bounds.min.z + rand() * Math.max(0.3, bounds.max.z - bounds.min.z)
-    petal.vx = 0.12 + rand() * 0.22
+    petal.vx = -(0.1 + rand() * 0.2)
     petal.vy = -(0.18 + rand() * 0.2)
     petal.vz = (rand() - 0.5) * 0.12
     petal.spin = rand() * Math.PI * 2
@@ -361,7 +361,16 @@ export function mountSakura(
     const height = canvas.clientHeight || window.innerHeight
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6))
     renderer.setSize(width, height, false)
-    camera.aspect = width / Math.max(1, height)
+    const aspect = width / Math.max(1, height)
+    camera.aspect = aspect
+    const dist = 7.6
+    const halfH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * dist
+    const halfW = halfH * aspect
+    // Pin the crown to the upper-right so limbs enter from the top-right.
+    const camX = crown.x - halfW * 0.72
+    const camY = crown.y - halfH * 0.58
+    camera.position.set(camX, camY, dist)
+    camera.lookAt(camX, camY, 0)
     camera.updateProjectionMatrix()
   }
   setSize()
@@ -395,7 +404,7 @@ export function mountSakura(
         petal.z += petal.vz * dt
         petal.spin += dt * 1.4
         petal.tilt += dt * 0.9
-        if (petal.y < -2.4 || petal.x > 6.5) resetFaller(petal)
+        if (petal.y < -2.8 || petal.x < -4.8) resetFaller(petal)
         dummy.position.set(petal.x, petal.y, petal.z)
         dummy.rotation.set(petal.tilt, petal.spin, petal.phase)
         dummy.scale.setScalar(petal.scale)
