@@ -1,5 +1,5 @@
 import hangDesktop from '@/assets/sakura-hang'
-import hangNarrow from '@/assets/sakura-hang-right'
+import hangNarrow from '@/assets/sakura-hang-narrow'
 
 const PETALS = [
   { left: 58, delay: 0, duration: 9.2, size: 9, drift: -90 },
