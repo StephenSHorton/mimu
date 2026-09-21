@@ -4,7 +4,7 @@ A free [gifntext](https://gifntext.com)-style GIF text editor. The name is Japan
 
 Imgflip is only the “free, no paywall” idea — not the product. Mimu does not call Giphy, Imgur, or any other media API.
 
-A Three.js cherry blossom sits on the right: branches come down from the top right, behind the UI. Petals fall instead of flat blossom icons. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
+A flat cherry-blossom illustration sits off the right: branches enter from the top-right corner and hang down behind the UI. Petals fall. There is no 3D scene. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
 
 ## Run locally
 
@@ -47,4 +47,4 @@ Changing `.github/pages-release` bootstraps a Pages deploy when a `GITHUB_TOKEN`
 
 ## Stack
 
-Vite 8 (Rolldown), React 19, TypeScript, Tailwind, TanStack Router, shadcn/ui, Three.js.
+Vite 8 (Rolldown), React 19, TypeScript, Tailwind, TanStack Router, shadcn/ui.
