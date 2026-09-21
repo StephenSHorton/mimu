@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { Textarea } from '@/components/ui/textarea'
+import { discreteFrameCount, stillFrameAtTime, stillTimeAtFrame } from '@/lib/frames'
 import {
   inFrameFromTime,
   inTimeFromFrame,
@@ -54,7 +55,7 @@ export function LayerInspector({
   onChange,
 }: LayerInspectorProps) {
   const selected = project.layers.find((layer) => layer.id === selectedId) ?? null
-  const frameCount = gif?.frames.length ?? 24
+  const frameCount = discreteFrameCount(project.durationMs, gif)
 
   function patch(partial: Partial<Layer>) {
     if (!selected) return
@@ -67,13 +68,13 @@ export function LayerInspector({
   }
 
   function addText() {
-    const layer = createTextLayer()
+    const layer = createTextLayer('YOUR TEXT', project.durationMs, gif)
     onChange({ ...project, layers: [...project.layers, layer] })
     onSelect(layer.id)
   }
 
   function addEmoji(emoji: string) {
-    const layer = createEmojiLayer(emoji)
+    const layer = createEmojiLayer(emoji, project.durationMs, gif)
     onChange({ ...project, layers: [...project.layers, layer] })
     onSelect(layer.id)
   }
@@ -86,22 +87,25 @@ export function LayerInspector({
   }
 
   function timeToInFrame(time: number) {
-    if (!gif) return Math.round(time * (frameCount - 1)) + 1
+    if (!gif) return stillFrameAtTime(project.durationMs, time) + 1
     return inFrameFromTime(gif, time)
   }
 
   function timeToOutFrame(time: number) {
-    if (!gif) return Math.max(1, Math.round(time * frameCount))
+    if (!gif) return stillFrameAtTime(project.durationMs, Math.max(0, time - 1e-6)) + 1
     return outFrameFromTime(gif, time)
   }
 
   function inFrameToTime(frameNumber: number) {
-    if (!gif) return (frameNumber - 1) / Math.max(1, frameCount - 1)
+    if (!gif) return stillTimeAtFrame(project.durationMs, frameNumber - 1)
     return inTimeFromFrame(gif, frameNumber)
   }
 
   function outFrameToTime(frameNumber: number) {
-    if (!gif) return frameNumber / frameCount
+    if (!gif) {
+      if (frameNumber >= frameCount) return 1
+      return stillTimeAtFrame(project.durationMs, frameNumber)
+    }
     return outTimeFromFrame(gif, frameNumber)
   }
 
@@ -260,7 +264,10 @@ export function LayerInspector({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Motion while visible</Label>
+            <Label>Pose on these frames</Label>
+            <p className="-mt-1 text-[11px] text-muted-foreground">
+              Snaps per GIF frame. No in-between motion — export burns one pose per frame.
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {MOTIONS.map((motion) => (
                 <Button
@@ -272,7 +279,9 @@ export function LayerInspector({
                     onChange({
                       ...project,
                       layers: project.layers.map((layer) =>
-                        layer.id === selected.id ? applyMotion(layer, motion.id) : layer,
+                        layer.id === selected.id
+                          ? applyMotion(layer, motion.id, project.durationMs, gif)
+                          : layer,
                       ),
                     })
                   }
