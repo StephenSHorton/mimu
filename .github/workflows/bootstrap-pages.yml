@@ -23,12 +23,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - id: ver
+        run: echo "version=$(head -n1 .github/pages-release | tr -d '[:space:]')" >> "$GITHUB_OUTPUT"
       - run: npm install
       - run: npm run generate:demo
       - run: npm run build
         env:
           VITE_BASE_PATH: /mimu/
-          VITE_APP_VERSION: v1.0.0
+          VITE_APP_VERSION: ${{ steps.ver.outputs.version }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

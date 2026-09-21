@@ -1,7 +1,6 @@
 export type MediaKind = 'image' | 'gif'
 export type MediaSource = 'upload' | 'demo'
 export type LayerKind = 'text' | 'emoji'
-export type LayerEase = 'linear' | 'smooth'
 export type TextAlign = 'left' | 'center' | 'right'
 
 export type MediaItem = {
@@ -33,7 +32,6 @@ export type Layer = {
   strokeColor: string
   strokeWidth: number
   align: TextAlign
-  ease: LayerEase
   inTime: number
   outTime: number
   keyframes: Keyframe[]
