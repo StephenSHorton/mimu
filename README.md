@@ -4,7 +4,7 @@ A free [gifntext](https://gifntext.com)-style GIF text editor. The name is Japan
 
 Imgflip is only the “free, no paywall” idea — not the product. Mimu does not call Giphy, Imgur, or any other media API.
 
-A flat cherry-blossom illustration sits off the right: branches enter from the top-right corner and hang down behind the UI. Petals fall. There is no 3D scene. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
+A painted cherry-blossom image sits off the right: branches enter from the top-right corner and hang down behind the UI. Petals fall. There is no 3D scene and no stick-figure SVG. Captions snap to the source GIF’s frames — no interpolated motion, because export burns one pose per frame.
 
 ## Run locally
 

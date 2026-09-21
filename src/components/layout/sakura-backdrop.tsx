@@ -1,4 +1,5 @@
-import { SakuraTree } from '@/components/layout/sakura-tree'
+import hangDesktop from '@/assets/sakura-hang'
+import hangNarrow from '@/assets/sakura-hang-right'
 
 const PETALS = [
   { left: 58, delay: 0, duration: 9.2, size: 9, drift: -90 },
@@ -28,7 +29,14 @@ const PETALS = [
 export function SakuraBackdrop() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
-      <SakuraTree />
+      <picture>
+        <source media="(max-width: 799px)" srcSet={hangNarrow} />
+        <img
+          src={hangDesktop}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-right-top"
+        />
+      </picture>
       {PETALS.map((petal, i) => (
         <span
           key={i}
