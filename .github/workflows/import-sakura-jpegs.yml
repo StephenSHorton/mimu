@@ -1,0 +1,42 @@
+name: Import approved sakura JPEGs
+
+on:
+  push:
+    branches: [cursor/ship-sakura-v130-c3be]
+    paths:
+      - '.github/workflows/import-sakura-jpegs.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the approved public/ JPEGs
+        run: |
+          mkdir -p public
+          curl -fsSL -o public/sakura-hang.jpg https://litter.catbox.moe/lzqios.jpg
+          curl -fsSL -o public/sakura-hang-narrow.jpg https://litter.catbox.moe/m86lp9.jpg
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          expect = {
+              'public/sakura-hang.jpg': '4306daea29e811595efbda930c1493d2e0ecf99ba4a0686e912f12cb001cb60f',
+              'public/sakura-hang-narrow.jpg': '3aa5c1e5722a716c0b3c8891f239fd68f84e80599704798ab1b85e41a856f6cd',
+          }
+          for path, digest in expect.items():
+              data = Path(path).read_bytes()
+              got = hashlib.sha256(data).hexdigest()
+              if got != digest or data[:3] != b'\xff\xd8\xff' or data[-2:] != b'\xff\xd9':
+                  raise SystemExit(f'{path} failed check size={len(data)} sha={got}')
+              print(path, 'ok', len(data), got)
+          PY
+      - name: Commit JPEGs onto this branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/sakura-hang.jpg public/sakura-hang-narrow.jpg
+          git commit -m "Add approved hanging sakura JPEGs to public/"
+          git push
