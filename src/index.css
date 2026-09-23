@@ -136,3 +136,35 @@ body {
     radial-gradient(900px 420px at 100% 0%, oklch(0.91 0.05 20 / 0.4), transparent 52%),
     var(--background);
 }
+
+.mimu-sakura-petal {
+  position: absolute;
+  top: -8%;
+  border-radius: 70% 12% 70% 12%;
+  background: linear-gradient(145deg, #ffe4ec, #f48fb1);
+  opacity: 0.88;
+  animation-name: mimu-sakura-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes mimu-sakura-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(var(--mimu-petal-drift, -90px), 115vh, 0) rotate(340deg);
+    opacity: 0.12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mimu-sakura-petal {
+    animation: none;
+    display: none;
+  }
+}
