@@ -14,6 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: cursor/ship-sakura-v130-c3be
+          fetch-depth: 0
       - name: Fetch the approved public/ JPEGs
         run: |
           mkdir -p public
@@ -38,5 +41,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/sakura-hang.jpg public/sakura-hang-narrow.jpg
+          if git diff --cached --quiet; then
+            echo "JPEGs already committed"
+            exit 0
+          fi
           git commit -m "Add approved hanging sakura JPEGs to public/"
-          git push
+          git pull --rebase origin cursor/ship-sakura-v130-c3be
+          git push origin HEAD:cursor/ship-sakura-v130-c3be
